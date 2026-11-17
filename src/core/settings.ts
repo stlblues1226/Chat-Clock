@@ -140,8 +140,16 @@ export function migrate(stored: unknown): Settings {
     return {
       ...d,
       ...s,
-      complications: { ...d.complications, ...s.complications },
-      injection: { ...d.injection, ...s.injection },
+      // Local patch: the popup checkboxes are gone and Gravure decides what is sent,
+      // so stored on/off switches (possibly stale) are ignored; defaults always apply.
+      complications: { ...d.complications },
+      injection: {
+        ...d.injection,
+        ...s.injection,
+        // Local patch: "Only when asked" depended on the removed clock chip.
+        frequency:
+          s.injection?.frequency === 'every-message' ? 'every-message' : 'session-start',
+      },
       sites: { ...d.sites, ...s.sites },
       schemaVersion: SCHEMA_VERSION,
     };

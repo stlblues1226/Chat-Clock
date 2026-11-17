@@ -67,7 +67,16 @@ export const COMPLICATIONS: Record<ComplicationId, Complication> = {
   date: {
     id: 'date',
     label: { en: 'Date', fr: 'Date' },
-    value: (ctx) => fmt(ctx, { day: 'numeric', month: 'long', year: 'numeric' }),
+    // Local patch: English uses numeric MM/DD/YYYY; French keeps the long form.
+    value: (ctx) =>
+      ctx.lang === 'en'
+        ? new Intl.DateTimeFormat('en-US', {
+            timeZone: ctx.timeZone,
+            month: '2-digit',
+            day: '2-digit',
+            year: 'numeric',
+          }).format(ctx.now)
+        : fmt(ctx, { day: 'numeric', month: 'long', year: 'numeric' }),
   },
   weekday: {
     id: 'weekday',

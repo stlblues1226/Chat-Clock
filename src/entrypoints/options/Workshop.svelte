@@ -10,7 +10,6 @@
     defaultSettings,
     DIAL_IDS,
     type DialId,
-    type PastilleSize,
     type Settings,
     type UiLanguage,
   } from '../../core/settings';
@@ -54,11 +53,11 @@
 
   const t = $derived(makeT(resolveLocale(settings.uiLanguage, navigator.language)));
   const SECTIONS = $derived([
-    { id: 'collections', name: 'Collections', line: t('navCollections') },
-    { id: 'gravure', name: 'Gravure', line: t('navGravure') },
-    { id: 'wrists', name: 'Wrists', line: t('navWrists') },
-    { id: 'remontoir', name: 'Remontoir', line: t('navRemontoir') },
-    { id: 'transparence', name: 'Transparence', line: t('navTransparence') },
+    { id: 'collections', name: 'Clock Face', line: t('navCollections') },
+    { id: 'gravure', name: 'What To Display Timestamp Info', line: t('navGravure') },
+    { id: 'wrists', name: 'Sites', line: t('navWrists') },
+    { id: 'remontoir', name: 'When To Display Timestamp Info', line: t('navRemontoir') },
+    { id: 'transparence', name: 'Data Sharing Disclosure', line: t('navTransparence') },
     { id: 'langues', name: t('langSection'), line: t('langSectionLine') },
   ]);
 
@@ -88,10 +87,6 @@
 
   function pickDial(d: DialId): void {
     settings.dial = d;
-    void save();
-  }
-  function pickSize(sz: PastilleSize): void {
-    settings.pastilleSize = sz;
     void save();
   }
 
@@ -169,8 +164,7 @@
 
 <main>
   <header>
-    <img class="maison" src="/monogram.png" alt={BRAND.name} />
-    <h1>The Workshop</h1>
+    <h1>Chat Clock Settings</h1>
     <p class="welcome">{t('bench')}</p>
   </header>
 
@@ -180,8 +174,8 @@
       <div class="cushion"></div>
     </div>
     <p class="own-eyebrow">{t('yourWatch')}</p>
-    <p class="own-dial">{DIAL_INFO[settings.dial].name} Collection</p>
-    <p class="own-calibre">Calibre 1.0</p>
+    <p class="own-dial">{DIAL_INFO[settings.dial].name} clock face</p>
+    <p class="own-calibre">Version {BRAND.calibre}</p>
   </section>
 
   <div class="bench">
@@ -196,7 +190,7 @@
 
     <div class="table">
       {#if section === 'collections'}
-        <h2>Collections</h2>
+        <h2>Clock Face</h2>
         <p class="lede">{t('collectionsLede')}</p>
         <div class="dials">
           {#each DIAL_IDS as d (d)}
@@ -207,22 +201,8 @@
             </button>
           {/each}
         </div>
-
-        <h3>{t('pastilleH')}</h3>
-        <p class="lede">{t('pastilleLede')}</p>
-        <div class="seg">
-          {#each ['s', 'm', 'l'] as sz (sz)}
-            <button
-              class="seg-item"
-              class:chosen={settings.pastilleSize === sz}
-              onclick={() => pickSize(sz as PastilleSize)}
-            >
-              {sz.toUpperCase()}
-            </button>
-          {/each}
-        </div>
       {:else if section === 'gravure'}
-        <h2>Gravure</h2>
+        <h2>What To Display Timestamp Info</h2>
         <p class="lede">{t('gravureLede')}</p>
         <div class="chips">
           {#each TOKENS as t (t)}
@@ -239,7 +219,7 @@
           <button class="linklike" onclick={resetEngraving}>{t('returnEngraving')}</button>
         </div>
       {:else if section === 'wrists'}
-        <h2>Wrists</h2>
+        <h2>Sites</h2>
         <p class="lede">{t('wristsLede')}</p>
         {#each namedWrists as w (w.id)}
           <div class="wrist">
@@ -268,11 +248,11 @@
           <p class="note">{t('noOffered')}</p>
         {/if}
       {:else if section === 'remontoir'}
-        <h2>Remontoir</h2>
+        <h2>When To Display Timestamp Info</h2>
         <p class="lede">{t('remontoirLede')}</p>
         <h3>{t('whenWrites')}</h3>
         <div class="choices">
-          {#each [{ v: 'session-start', t: t('freqSessionT'), d: t('freqSessionD') }, { v: 'every-message', t: t('freqEveryT'), d: t('freqEveryD') }, { v: 'manual', t: t('freqManualT'), d: t('freqManualD') }] as opt (opt.v)}
+          {#each [{ v: 'session-start', t: t('freqSessionT'), d: t('freqSessionD') }, { v: 'every-message', t: t('freqEveryT'), d: t('freqEveryD') }] as opt (opt.v)}
             <label class="choice" class:chosen={settings.injection.frequency === opt.v}>
               <input
                 type="radio"
@@ -314,7 +294,7 @@
           <strong>{settings.injection.fullBlockAfterMinutes}</strong> {t('fullAgainB')}
         </label>
       {:else if section === 'transparence'}
-        <h2>Transparence</h2>
+        <h2>Data Sharing Disclosure</h2>
         <p class="lede">{t('transparenceLede')}</p>
         <h3>{t('fullContextH')}</h3>
         <pre class="preview wide">{fullPreview}</pre>
@@ -324,7 +304,7 @@
           <p>{t('privacy')}</p>
           <p class="note">{t('verify')}</p>
           <p class="engraved">
-            Calibre {BRAND.calibre} · {timesTotal === 1 ? t('timeTold1') : t('timeTold', { n: timesTotal })}
+            Version {BRAND.calibre} · {timesTotal === 1 ? t('timeTold1') : t('timeTold', { n: timesTotal })}
           </p>
         </div>
       {:else if section === 'langues'}
@@ -396,12 +376,6 @@
   header {
     text-align: center;
     margin-bottom: 44px;
-  }
-  .maison {
-    width: 128px;
-    mix-blend-mode: multiply;
-    margin: 0 auto;
-    display: block;
   }
   h1 {
     margin: 8px 0 6px;

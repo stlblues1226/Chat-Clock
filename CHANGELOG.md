@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.8.0 — Chat Clock fork (2026-11-17)
+
+- Forked from AI-Watch 1.0.26 and renamed Chat Clock.
+- Fix: skipped timestamp on every other message.
+- Date format MM/DD/YYYY; floating clock removed; plain-English settings;
+  checkboxes removed so the text box decides what is sent.
+- New icon; original logo, box art and welcome page removed.
+- Added Firefox data-collection declaration ("none") and a fixed add-on ID.
+
+## Original AI-Watch history (Alain Caviggia)
+
 ## 1.0.26 — 2026-07-22
 
 - Fix: the em dash in the manifest description and in `BRAND.calibre` had

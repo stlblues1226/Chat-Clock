@@ -6,10 +6,8 @@
   import { BRAND } from '../../shared/brand';
   import { loadSettings, loadWrist } from '../../shared/storage';
   import { knownSiteId, SITE_NAMES } from '../../adapters/resolver';
-  import { COMPLICATIONS, COMPLICATION_ORDER } from '../../core/complications/registry';
-  import type { ComplicationContext } from '../../core/complications/types';
-  import { buildPreview, liveSession } from '../../core/preview';
-  import { defaultSettings, type ComplicationId, type Settings } from '../../core/settings';
+  import { buildPreview } from '../../core/preview';
+  import { defaultSettings, type Settings } from '../../core/settings';
   import { makeT, resolveLocale } from '../../shared/i18n';
   import { initialWristState, type WristState } from '../../core/session-tracker';
 
@@ -91,36 +89,9 @@
 
   const displayedNow = $derived(frozenAt ?? new Date(now.getTime() + windOffset));
   const t = $derived(makeT(resolveLocale(settings.uiLanguage, navigator.language)));
-  const C_KEYS: Record<ComplicationId, string> = {
-    date: 'cDate',
-    weekday: 'cWeekday',
-    clock: 'cClock',
-    timezone: 'cTimezone',
-    isoWeek: 'cIsoWeek',
-    chronograph: 'cChronograph',
-    session: 'cSession',
-    season: 'cSeason',
-    timeOfDay: 'cTimeOfDay',
-    moonPhase: 'cMoonPhase',
-  };
   const running = $derived(settings.crownRunning);
 
   const siteEnabled = $derived(siteId !== null && settings.sites[siteId]?.enabled !== false);
-
-  const liveCtx = $derived.by((): ComplicationContext => {
-    const live = liveSession(
-      $state.snapshot(wrist),
-      now.getTime(),
-      settings.injection.sessionResetMinutes,
-    );
-    return {
-      now,
-      timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-      lang: 'en',
-      elapsedMs: live.elapsedMs,
-      sessionMs: live.sessionMs,
-    };
-  });
 
   const previewText = $derived(
     buildPreview($state.snapshot(settings), $state.snapshot(wrist), now.getTime()).text,
@@ -133,11 +104,6 @@
   function toggleCrown(): void {
     settings.crownRunning = !settings.crownRunning;
     frozenAt = settings.crownRunning ? null : new Date();
-    void save();
-  }
-
-  function toggleComplication(id: ComplicationId): void {
-    settings.complications[id] = !settings.complications[id];
     void save();
   }
 
@@ -176,6 +142,12 @@
     }
   }
 
+  /** Local patch: one clear way from the popup to the Workshop (settings page). */
+  async function openSettings(): Promise<void> {
+    await browser.runtime.openOptionsPage();
+    window.close();
+  }
+
   const wristStopped = $derived(
     siteId !== null &&
       settings.sites[siteId]?.everWorked === true &&
@@ -187,10 +159,6 @@
       SITE_NAMES[siteId] === undefined &&
       settings.sites[siteId]?.everWorked !== true,
   );
-
-  function liveValue(id: ComplicationId): string {
-    return COMPLICATIONS[id].value(liveCtx) ?? '—';
-  }
 </script>
 
 <main>
@@ -226,21 +194,19 @@
     {/if}
   </section>
 
-  {#if loaded}
-    <section class="complications" class:inert-zone={!running}>
-      {#each COMPLICATION_ORDER as id (id)}
-        <label class="row" class:off={!settings.complications[id]}>
-          <span class="label">{t(C_KEYS[id])}</span>
-          <span class="value">{settings.complications[id] ? liveValue(id) : ''}</span>
-          <input
-            type="checkbox"
-            checked={settings.complications[id]}
-            onchange={() => toggleComplication(id)}
-          />
-        </label>
-      {/each}
-    </section>
+  <button class="settings-btn" onclick={() => void openSettings()}>
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+      <line x1="4" y1="6" x2="20" y2="6" />
+      <circle cx="9" cy="6" r="2.4" fill="#fff" />
+      <line x1="4" y1="12" x2="20" y2="12" />
+      <circle cx="15" cy="12" r="2.4" fill="#fff" />
+      <line x1="4" y1="18" x2="20" y2="18" />
+      <circle cx="8" cy="18" r="2.4" fill="#fff" />
+    </svg>
+    {t('openSettings')}
+  </button>
 
+  {#if loaded}
     <section class="footer" class:inert-zone={!running}>
       <button class="linklike" onclick={() => (previewOpen = !previewOpen)}>
         {previewOpen ? t('hideSent') : t('seeSent')}
@@ -252,8 +218,8 @@
     </section>
   {/if}
 
-  <img class="maison" src="/monogram.png" alt={BRAND.name} />
-  <p class="calibre">Calibre {BRAND.calibre}</p>
+  <p class="maison">{BRAND.name}</p>
+  <p class="calibre">Version {BRAND.calibre}</p>
 </main>
 
 <style>
@@ -321,9 +287,27 @@
   .linklike:hover {
     color: #1c1917;
   }
-  .complications {
+  .settings-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
     margin-top: 14px;
-    border-top: 1px solid #e7e5e4;
+    padding: 9px 16px;
+    border: 1.5px solid #1c1917;
+    border-radius: 999px;
+    background: #fff;
+    color: #1c1917;
+    font: 600 13px/1 ui-sans-serif, system-ui, sans-serif;
+    cursor: pointer;
+    transition:
+      transform 0.15s ease,
+      box-shadow 0.15s ease;
+  }
+  .settings-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(28, 25, 23, 0.14);
   }
   .inert-zone {
     opacity: 0.4;
@@ -331,36 +315,8 @@
     filter: grayscale(1);
     transition: opacity 0.3s ease;
   }
-  .row {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 6px 0;
-    border-bottom: 1px solid #f5f5f4;
-    cursor: pointer;
-  }
-  .row .label {
-    font-size: 12px;
-    flex: 0 0 auto;
-  }
-  .row .value {
-    flex: 1;
-    text-align: right;
-    font-size: 11.5px;
-    color: #57534e;
-    font-variant-numeric: tabular-nums;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-  .row.off .label {
-    color: #a8a29e;
-  }
-  .row input {
-    accent-color: #1c1917;
-  }
   .footer {
-    margin-top: 12px;
+    margin-top: 16px;
     text-align: center;
   }
   .preview {
@@ -379,11 +335,11 @@
     color: #a8a29e;
   }
   .maison {
-    display: block;
-    width: 58px;
-    margin: 14px auto 0;
-    mix-blend-mode: multiply;
-    opacity: 0.9;
+    margin: 14px 0 0;
+    text-align: center;
+    font-family: Georgia, 'Times New Roman', serif;
+    font-size: 16px;
+    color: #1c1917;
   }
   .calibre {
     margin: 16px 0 0;

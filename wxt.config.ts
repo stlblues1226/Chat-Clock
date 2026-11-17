@@ -9,9 +9,18 @@ export default defineConfig({
   srcDir: 'src',
   modules: ['@wxt-dev/module-svelte'],
   manifest: {
-    name: 'AI-Watch Clock',
+    name: 'Chat Clock',
+    // Fixed ID so Firefox keeps saved settings between loads and for signing.
+    browser_specific_settings: {
+      gecko: {
+        id: '{37ee4a6b-3aa3-4670-8191-0142cb005366}',
+        strict_min_version: '140.0',
+        // Required by Mozilla for new add-ons: this add-on collects no data.
+        data_collection_permissions: { required: ['none'] },
+      },
+    },
     description:
-      'Give your AI a watch. Time awareness for ChatGPT, Claude, Gemini and any AI \u2014 100% local, zero network.',
+      'Adds the current date and time to the messages you send to an AI chat, so it knows when you wrote them. It does not track or check your usage or usage limits, and nothing leaves your computer.',
     // Step 2: "storage" only (settings + per-site session state, all local).
     // host access comes from the content script matches, nothing broader.
     permissions: ['storage', 'activeTab', 'scripting'],

@@ -1,45 +1,54 @@
-<img width="742" height="382" alt="readme-image" src="https://github.com/user-attachments/assets/97e3a33b-c9f5-4b43-94d1-0707a77c421e" />
+# Chat Clock
 
+Adds the current date and time to the messages you send to an AI chat, so the
+AI knows when you wrote them and doesn't treat a days-old comment as recent.
 
+It does **not** track or check your usage or usage limits. Everything runs
+locally in your browser, makes no network requests, and collects no data.
 
-# AI-Watch
+Works with ChatGPT, Claude, Gemini, Mistral, Perplexity and Grok, plus other
+AI sites you choose to allow.
 
-> Give your AI a sense of time.
+## Credit
 
-Local time context for AI chat interfaces — date, exact time, timezone,
-session length, and time elapsed since your last message. 100% local — zero
-network requests, verifiable in this codebase (`grep -r "fetch(" src/`
-returns nothing).
+Chat Clock is a modified fork of [AI-Watch](https://github.com/Alcaviggia/ai-watch)
+by Alain Caviggia, used under the MIT license (see `LICENSE`). All credit for the
+original design and code goes to him. This is an independent project and is not
+affiliated with or endorsed by the original author.
 
-Works with ChatGPT, Claude, Gemini, Mistral, Perplexity, and Grok out of the
-box, plus any other web AI interface (including local ones like Open WebUI,
-Ollama, and LM Studio) via the opt-in Free Wrist.
+The fixes and changes were made with help from Claude AI (Anthropic).
 
-**Status: Calibre 1.0 — GM. Shipping as "AI-Watch Clock" on the Chrome Web
-Store and Firefox Add-ons; source and releases live here.**
+## What is different from the original
 
-## Development
+- Fix: every other message was sent without a timestamp (the re-send guard
+  was never cleared after a button click).
+- The date is written as MM/DD/YYYY (the time is 24-hour).
+- The always-visible clock next to the message box is removed.
+- The "What To Display" text box is the only place that decides what is sent;
+  the confusing on/off checkboxes in the popup are gone.
+- Plain-English settings (Clock Face, What To Display Timestamp Info, When To
+  Display Timestamp Info, Data Sharing Disclosure) instead of watchmaking terms.
+- The "Open settings" button in the popup, and new icon and artwork (the
+  original logo and artwork are not included).
+
+## Build from source
+
+Requires Node.js 22 or newer.
 
 ```bash
-npm install
-npm run dev            # Chrome with HMR
-npm run dev:firefox    # Firefox
-npm test               # unit tests (core is pure & fully testable)
-npm run build && npm run build:firefox
+npm ci
+npm test
+npm run zip:firefox     # output: .output/chat-clock-<version>-firefox.zip
 ```
 
-## Architecture
-
-See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md). Key invariants: display
-name centralized in `src/shared/brand.ts`, dials are themes only,
-generic-first adapters, zero network, honest injection.
+To try it without installing: in Firefox open `about:debugging`, choose
+"This Firefox" > "Load Temporary Add-on", and select `manifest.json` from
+`.output/firefox-mv2/` after running `npm run build:firefox`.
 
 ## Privacy
 
-No data collection, no network requests, nothing leaves your device. See
-`src/shared/brand.ts` and the content scripts in `src/content/` for the
-full injection logic — there is nothing else to audit.
+No data collection, no network requests, nothing leaves your device.
 
 ## License
 
-MIT
+MIT. The original copyright notice (Alain Caviggia) is kept in `LICENSE`.

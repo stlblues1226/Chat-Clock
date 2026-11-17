@@ -1,8 +1,8 @@
 {
-  "name": "montre",
-  "description": "Give your AI a watch — local time context for AI chat interfaces. Internal codename; store name is \"AI-Watch Clock\", display brand is \"AI-Watch\" (src/shared/brand.ts).",
+  "name": "chat-clock",
+  "description": "Chat Clock — adds the current date and time to the messages you send to an AI chat. A modified fork of AI-Watch by Alain Caviggia (MIT).",
   "private": true,
-  "version": "1.0.26",
+  "version": "1.8.0",
   "type": "module",
   "scripts": {
     "dev": "wxt",

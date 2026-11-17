@@ -85,7 +85,6 @@ export function renderCustomTemplate(
   ctx?: ComplicationContext,
 ): string {
   const c = ctx ?? buildContext(input);
-  const enabled = input.settings.complications;
   const tokenToId = {
     date: 'date',
     weekday: 'weekday',
@@ -99,8 +98,10 @@ export function renderCustomTemplate(
     moonPhase: 'moonPhase',
   } as const;
 
-  // Line by line: a line whose known tokens ALL resolve to empty (disabled
-  // or inapplicable complications) is dropped entirely — no orphan labels.
+  // Local patch: the template is the single source of truth. Every chip it
+  // contains is rendered; the per-complication on/off switches are not consulted here.
+  // Line by line: a line whose known tokens ALL resolve to empty
+  // (inapplicable complications) is dropped entirely — no orphan labels.
   const outLines: string[] = [];
   for (const line of template.split('\n')) {
     let hasKnownToken = false;
@@ -109,7 +110,7 @@ export function renderCustomTemplate(
       const id = tokenToId[token as keyof typeof tokenToId];
       if (!id) return match; // unknown token: left as-is, visible to the user
       hasKnownToken = true;
-      const value = enabled[id] ? (COMPLICATIONS[id].value(c) ?? '') : '';
+      const value = COMPLICATIONS[id].value(c) ?? '';
       if (value !== '') hasValue = true;
       return value;
     });

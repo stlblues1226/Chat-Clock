@@ -25,7 +25,7 @@ describe('renderFullBlock — the golden example', () => {
     expect(renderFullBlock(input)).toBe(
       [
         'Current context',
-        'Date: Thursday 16 July 2026',
+        'Date: Thursday 07/16/2026',
         'Time: 14:32',
         'Timezone: Europe/Luxembourg',
         'ISO Week: 29',
@@ -59,7 +59,7 @@ describe('renderFullBlock — the golden example', () => {
     input.settings.complications.weekday = false;
     const block = renderFullBlock(input);
     expect(block).not.toContain('Timezone');
-    expect(block).toContain('Date: 16 July 2026'); // no weekday merged
+    expect(block).toContain('Date: 07/16/2026'); // no weekday merged
   });
 
   it('renders the charm complications when enabled', () => {
@@ -75,17 +75,29 @@ describe('renderFullBlock — the golden example', () => {
 });
 
 describe('renderFullBlock — custom template', () => {
-  it('substitutes tokens and drops lines of disabled complications', () => {
+  it('shows every chip in the template, whatever the stored switches say', () => {
     const input = exampleInput();
+    input.settings.complications.session = false; // stale switch from the old popup
     input.settings.complications.moonPhase = false;
-    input.settings.injection.customTemplate = [
-      'It is {time} on {weekday} ({timezone}).',
-      'Moon: {moonPhase}',
-      'Last message: {elapsed} ago.',
-    ].join('\n');
+    input.settings.injection.customTemplate =
+      'It is {time} on {weekday} ({timezone}). Session: {session}.';
     expect(renderFullBlock(input)).toBe(
-      ['It is 14:32 on Thursday (Europe/Luxembourg).', 'Last message: 12 minutes ago.'].join('\n'),
+      'It is 14:32 on Thursday (Europe/Luxembourg). Session: 1 hour 43 minutes.',
     );
+  });
+
+  it('renders chips that are off in the default layout', () => {
+    const input = exampleInput();
+    input.settings.injection.customTemplate = 'Week {isoWeek}, {season}';
+    expect(renderFullBlock(input)).toBe('Week 29, Summer');
+  });
+
+  it('drops lines whose chips have nothing to show', () => {
+    const input = { ...exampleInput(), elapsedMs: null };
+    input.settings.injection.customTemplate = ['It is {time}.', 'Last message: {elapsed} ago.'].join(
+      '\n',
+    );
+    expect(renderFullBlock(input)).toBe('It is 14:32.');
   });
 
   it('leaves unknown tokens visible so the user can spot typos', () => {

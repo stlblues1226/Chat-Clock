@@ -7,7 +7,8 @@ export default defineBackground(() => {
       const flag = await browser.storage.local.get('unboxing-opened');
       if (flag['unboxing-opened']) return;
       await browser.storage.local.set({ 'unboxing-opened': true });
-      await browser.tabs.create({ url: browser.runtime.getURL('/unboxing.html') });
+      // Local patch: open the settings page (the Workshop) instead of the welcome tour.
+      await browser.runtime.openOptionsPage();
     })();
   });
 

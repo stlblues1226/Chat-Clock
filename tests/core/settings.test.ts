@@ -35,13 +35,13 @@ describe('migrate', () => {
     const partial = {
       schemaVersion: SCHEMA_VERSION,
       dial: 'lab',
-      complications: { moonPhase: true },
+      complications: { moonPhase: true, session: false },
     };
     const out = migrate(partial);
     expect(out.dial).toBe('lab');
-    expect(out.complications.moonPhase).toBe(true);
+    // Gravure is the single source of truth: stored on/off switches are ignored.
+    expect(out.complications).toEqual(defaultSettings().complications);
     // Untouched fields come from defaults:
-    expect(out.complications.clock).toBe(true);
     expect(out.injection.sessionResetMinutes).toBe(30);
   });
 

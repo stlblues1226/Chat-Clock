@@ -25,6 +25,9 @@ export default defineContentScript({
   },
 });
 
+/** Local patch: the clock chip over the composer is switched off. */
+const SHOW_PASTILLE = false;
+
 async function init(): Promise<void> {
   const adapter = resolveAdapter(location.hostname);
   // Named wrists share their adapter id; free wrists are their hostname.
@@ -58,6 +61,7 @@ async function init(): Promise<void> {
   }
 
   function refreshPastille(composer: HTMLElement): void {
+    if (!SHOW_PASTILLE) return;
     if (!pastille)
       pastille = createPastille(document, {
         onToggleWorn: () => void toggleWorn(),
@@ -135,6 +139,12 @@ async function init(): Promise<void> {
           new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true }),
         );
       }
+      // The re-triggered send is a button click (or submit), and those handlers
+      // return early without consuming the flag. Disarm it shortly after, so it
+      // can't swallow the user's next real message (the "every other message" bug).
+      setTimeout(() => {
+        bypassNext = false;
+      }, 400);
     });
   }
 
