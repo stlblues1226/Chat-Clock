@@ -9,6 +9,12 @@ locally in your browser, makes no network requests, and collects no data.
 Works with ChatGPT, Claude, Gemini, Mistral, Perplexity and Grok, plus other
 AI sites you choose to allow.
 
+## Good to know
+
+- **Desktop Firefox only.** Chat Clock is made for Firefox on desktop computers. It is not offered for Firefox on Android and has not been tested there.
+- **Settings do not transfer between computers.** Your template, time format and date format are saved in the browser where you set them. They do not carry over to other computers, operating systems or Firefox Sync. This is on purpose, for privacy and security: nothing about your settings leaves your computer. Set them again on each computer you use.
+- **Tested on five Linux systems.** It has not been tested on Windows or macOS.
+
 ## Credit
 
 Chat Clock is a modified fork of [AI-Watch](https://github.com/Alcaviggia/ai-watch)
