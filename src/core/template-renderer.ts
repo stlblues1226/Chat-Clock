@@ -29,6 +29,8 @@ function buildContext(input: RenderInput): ComplicationContext {
     lang: input.settings.injection.blockLanguage,
     elapsedMs: input.elapsedMs,
     sessionMs: input.sessionMs,
+    timeFormat: input.settings.injection.timeFormat,
+    dateFormat: input.settings.injection.dateFormat,
   };
 }
 

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
+  import { onMount, tick } from 'svelte';
   import { browser } from 'wxt/browser';
   import { BRAND } from '../../shared/brand';
   import Watch from '../../components/Watch.svelte';
@@ -9,8 +9,10 @@
   import {
     defaultSettings,
     DIAL_IDS,
+    type DateFormat,
     type DialId,
     type Settings,
+    type TimeFormat,
     type UiLanguage,
   } from '../../core/settings';
   import { LOCALE_NAMES, makeT, resolveLocale, UI_LOCALES } from '../../shared/i18n';
@@ -91,16 +93,47 @@
   }
 
   let textareaEl: HTMLTextAreaElement | undefined = $state(undefined);
+  /**
+   * Insert a token at the cursor. A space goes in front when the text before it
+   * doesn't already end in whitespace, and behind when the text after it doesn't
+   * start with whitespace, so picked items never run together.
+   */
   function insertToken(token: string): void {
     const t = `{${token}}`;
-    if (!textareaEl) {
-      templateDraft += t;
-      return;
-    }
-    const start = textareaEl.selectionStart ?? templateDraft.length;
-    const end = textareaEl.selectionEnd ?? start;
-    templateDraft = templateDraft.slice(0, start) + t + templateDraft.slice(end);
+    const start = textareaEl?.selectionStart ?? templateDraft.length;
+    const end = textareaEl?.selectionEnd ?? start;
+    const before = templateDraft.slice(0, start);
+    const after = templateDraft.slice(end);
+    const lead = before !== '' && !/\s$/.test(before) ? ' ' : '';
+    const trail = after !== '' && !/^\s/.test(after) ? ' ' : '';
+    templateDraft = before + lead + t + trail + after;
+    const caret = (before + lead + t).length;
+    void tick().then(() => {
+      textareaEl?.focus();
+      textareaEl?.setSelectionRange(caret, caret);
+    });
   }
+
+  function pickTimeFormat(f: TimeFormat): void {
+    settings.injection.timeFormat = f;
+    void save();
+  }
+  function pickDateFormat(f: DateFormat): void {
+    settings.injection.dateFormat = f;
+    void save();
+  }
+  const TIME_CHOICES: { v: TimeFormat; name: string }[] = [
+    { v: '24h', name: '24-hour (14:32)' },
+    { v: '12h', name: '12-hour with AM/PM (2:32 PM)' },
+  ];
+  const DATE_CHOICES: { v: DateFormat; name: string }[] = [
+    { v: 'auto', name: 'Automatic (MM/DD/YYYY in English)' },
+    { v: 'numeric', name: 'Numeric' },
+    { v: 'short', name: 'Short month' },
+    { v: 'long', name: 'Long month' },
+    { v: 'dayfirst', name: 'Day first' },
+    { v: 'iso', name: 'ISO (year-month-day)' },
+  ];
   function saveEngraving(): void {
     settings.injection.customTemplate =
       templateDraft.trim() === DEFAULT_TEMPLATE.trim() ? null : templateDraft;
@@ -204,6 +237,26 @@
       {:else if section === 'gravure'}
         <h2>What To Display Timestamp Info</h2>
         <p class="lede">{t('gravureLede')}</p>
+        <h3>Time format</h3>
+        <div class="seg" role="group" aria-label="Time format">
+          {#each TIME_CHOICES as c (c.v)}
+            <button
+              class="seg-item"
+              class:chosen={settings.injection.timeFormat === c.v}
+              onclick={() => pickTimeFormat(c.v)}>{c.name}</button>
+          {/each}
+        </div>
+        <h3>Date format</h3>
+        <div class="seg wrap" role="group" aria-label="Date format">
+          {#each DATE_CHOICES as c (c.v)}
+            <button
+              class="seg-item"
+              class:chosen={settings.injection.dateFormat === c.v}
+              onclick={() => pickDateFormat(c.v)}>{c.name}</button>
+          {/each}
+        </div>
+        <p class="note">Example: {renderCustomTemplate('{date} {time}', { settings: $state.snapshot(settings), now, elapsedMs: null, sessionMs: null })}</p>
+        <h3>Items</h3>
         <div class="chips">
           {#each TOKENS as t (t)}
             <button class="chip" onclick={() => insertToken(t)}>{'{' + t + '}'}</button>
@@ -541,6 +594,10 @@
     border: 1px solid #d6d3d1;
     border-radius: 999px;
     overflow: hidden;
+  }
+  .seg.wrap {
+    flex-wrap: wrap;
+    border-radius: 14px;
   }
   .seg-item {
     border: none;

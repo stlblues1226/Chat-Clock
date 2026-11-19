@@ -13,7 +13,7 @@ export const BRAND = {
   /** Display name, used inside the extension UI. */
   name: 'Chat Clock',
   /** Version vocabulary: releases are "Calibres". */
-  calibre: '1.8',
+  calibre: '1.9',
   tagline: {
     en: 'Give your AI a watch.',
     fr: 'Offrez une montre à votre IA.',

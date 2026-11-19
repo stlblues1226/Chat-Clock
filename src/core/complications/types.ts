@@ -1,4 +1,4 @@
-import type { ComplicationId } from '../settings';
+import type { ComplicationId, DateFormat, TimeFormat } from '../settings';
 
 export type BlockLanguage = 'en' | 'fr';
 
@@ -12,6 +12,10 @@ export interface ComplicationContext {
   elapsedMs: number | null;
   /** ms since the session started; null if unknown. */
   sessionMs: number | null;
+  /** Defaults to '24h'. */
+  timeFormat?: TimeFormat;
+  /** Defaults to 'auto'. */
+  dateFormat?: DateFormat;
 }
 
 export interface Complication {

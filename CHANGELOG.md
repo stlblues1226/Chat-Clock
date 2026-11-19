@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.9.0 — (2026-11-19)
+
+- New setting: 12-hour clock with AM/PM or the 24-hour clock.
+- New setting: date format (numeric, short month, long month, day first, ISO),
+  with the original automatic format kept as the default.
+- Picking an item above the template box now adds a space around it, so
+  items no longer run together.
+- Removed the unused clock-chip code (also clears Mozilla's innerHTML warning).
+
 ## 1.8.0 — Chat Clock fork (2026-11-17)
 
 - Forked from AI-Watch 1.0.26 and renamed Chat Clock.

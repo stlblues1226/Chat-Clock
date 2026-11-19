@@ -1,9 +1,5 @@
 import { resolveAdapter } from '../adapters/resolver';
-import { buildPreview } from '../core/preview';
 import { appendToComposer, composerText } from '../content/injector';
-import { GIFT_PROMPT } from '../shared/gift';
-import { resolveLocale } from '../shared/i18n';
-import { createPastille, type Pastille } from '../content/pastille';
 import { loadSettings, loadWrist, onSettingsChanged, saveWrist } from '../shared/storage';
 import { tick, wantsFullBlock, type WristState } from '../core/session-tracker';
 import { renderCompact, renderFullBlock } from '../core/template-renderer';
@@ -25,9 +21,6 @@ export default defineContentScript({
   },
 });
 
-/** Local patch: the clock chip over the composer is switched off. */
-const SHOW_PASTILLE = false;
-
 async function init(): Promise<void> {
   const adapter = resolveAdapter(location.hostname);
   // Named wrists share their adapter id; free wrists are their hostname.
@@ -36,7 +29,6 @@ async function init(): Promise<void> {
   onSettingsChanged((s) => (settings = s));
   let wrist: WristState = await loadWrist(siteId);
 
-  let pastille: Pastille | null = null;
   let wiredComposer: HTMLElement | null = null;
   /** Re-entrancy flag: the re-triggered send must pass through untouched. */
   let bypassNext = false;
@@ -46,47 +38,9 @@ async function init(): Promise<void> {
   const siteWorn = (): boolean => settings.sites[siteId]?.enabled !== false;
   const isActive = (): boolean => settings.crownRunning && siteWorn();
 
-  async function markGiftOffered(): Promise<void> {
-    settings.sites[siteId] = {
-      ...settings.sites[siteId],
-      enabled: siteWorn(),
-      giftOffered: true,
-    };
-    await browser.storage.local.set({ settings });
-  }
-
-  async function toggleWorn(): Promise<void> {
-    settings.sites[siteId] = { ...settings.sites[siteId], enabled: !siteWorn() };
-    await browser.storage.local.set({ settings });
-  }
-
-  function refreshPastille(composer: HTMLElement): void {
-    if (!SHOW_PASTILLE) return;
-    if (!pastille)
-      pastille = createPastille(document, {
-        onToggleWorn: () => void toggleWorn(),
-        onOpenWorkshop: () =>
-          void browser.runtime.sendMessage({ type: 'open-workshop' }).catch(() => {}),
-        onGiftAccept: () => {
-          const c = adapter.findComposer(document);
-          if (c) appendToComposer(c, GIFT_PROMPT[settings.injection.blockLanguage]);
-          void markGiftOffered();
-        },
-        onGiftDismiss: () => void markGiftOffered(),
-      });
-    pastille.setWorn(siteWorn());
-    pastille.setSize(settings.pastilleSize);
-    pastille.setDial(settings.dial);
-    pastille.setLocale(resolveLocale(settings.uiLanguage, navigator.language));
-    pastille.setGiftVisible(settings.sites[siteId]?.giftOffered !== true);
-    const p = buildPreview(settings, wrist, Date.now());
-    pastille.setPreview(p.text, p.clock);
-    pastille.reposition(composer);
-  }
-
   function blockAlreadyPresent(text: string): boolean {
     return (
-      /⌚ .*\d{2}:\d{2}/.test(text) ||
+      /⌚ .*\d{1,2}:\d{2}/.test(text) ||
       text.includes('Use this information whenever it is relevant.') ||
       text.includes("Utilise ces informations lorsque c'est pertinent.")
     );
@@ -122,7 +76,6 @@ async function init(): Promise<void> {
       sessionMs: result.sessionMs,
     };
     appendToComposer(composer, isFull ? renderFullBlock(input) : renderCompact(input));
-    pastille?.tick();
 
     bypassNext = true;
     // Let the editor process the insertion, then re-trigger the send —
@@ -237,15 +190,6 @@ async function init(): Promise<void> {
       wiredComposer = null;
       return;
     }
-    if (!settings.crownRunning) {
-      // Crown pulled: everything stops, everywhere — chip included.
-      pastille?.destroy();
-      pastille = null;
-      wiredComposer = composer;
-      return;
-    }
-    // Watch taken off on this site: chip stays, grayed, one click to re-wear.
     wiredComposer = composer;
-    refreshPastille(composer);
   }, 1500);
 }

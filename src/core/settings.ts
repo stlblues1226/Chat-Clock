@@ -37,6 +37,24 @@ export type InjectionFrequency = 'session-start' | 'every-message' | 'manual';
 
 export type PastilleSize = 's' | 'm' | 'l';
 
+/** 24-hour ("14:32") or 12-hour with AM/PM ("2:32 PM"). */
+export type TimeFormat = '24h' | '12h';
+export const TIME_FORMATS: readonly TimeFormat[] = ['24h', '12h'];
+
+/**
+ * How the date is written. 'auto' keeps the original behaviour
+ * (English: 11/17/2026, French: long form).
+ */
+export type DateFormat = 'auto' | 'numeric' | 'short' | 'long' | 'dayfirst' | 'iso';
+export const DATE_FORMATS: readonly DateFormat[] = [
+  'auto',
+  'numeric',
+  'short',
+  'long',
+  'dayfirst',
+  'iso',
+];
+
 export type UiLanguage =
   | 'auto'
   | 'en'
@@ -76,6 +94,10 @@ export interface Settings {
     blockLanguage: 'en' | 'fr';
     /** User-editable template; null = built-in default for blockLanguage. */
     customTemplate: string | null;
+    /** 24-hour or 12-hour (AM/PM) clock. */
+    timeFormat: TimeFormat;
+    /** How the date is written. */
+    dateFormat: DateFormat;
   };
   /** Keyed by site id (adapter id) or origin for generic sites. */
   sites: Record<string, SiteSetting>;
@@ -108,6 +130,8 @@ export function defaultSettings(): Settings {
       fullBlockAfterMinutes: 120,
       blockLanguage: 'en',
       customTemplate: null,
+      timeFormat: '24h',
+      dateFormat: 'auto',
     },
     sites: {},
   };
@@ -149,6 +173,13 @@ export function migrate(stored: unknown): Settings {
         // Local patch: "Only when asked" depended on the removed clock chip.
         frequency:
           s.injection?.frequency === 'every-message' ? 'every-message' : 'session-start',
+        // Unknown or corrupt values fall back to the defaults.
+        timeFormat: TIME_FORMATS.includes(s.injection?.timeFormat as TimeFormat)
+          ? (s.injection?.timeFormat as TimeFormat)
+          : d.injection.timeFormat,
+        dateFormat: DATE_FORMATS.includes(s.injection?.dateFormat as DateFormat)
+          ? (s.injection?.dateFormat as DateFormat)
+          : d.injection.dateFormat,
       },
       sites: { ...d.sites, ...s.sites },
       schemaVersion: SCHEMA_VERSION,

@@ -55,3 +55,32 @@ describe('migrate', () => {
     expect(migrate({ schemaVersion: 999 }).schemaVersion).toBe(SCHEMA_VERSION);
   });
 });
+
+describe('time and date format settings', () => {
+  it('default to the original look', () => {
+    const d = defaultSettings();
+    expect(d.injection.timeFormat).toBe('24h');
+    expect(d.injection.dateFormat).toBe('auto');
+  });
+  it('fill in for settings saved by an older version', () => {
+    const old = { schemaVersion: SCHEMA_VERSION, injection: { frequency: 'every-message' } };
+    const out = migrate(old);
+    expect(out.injection.timeFormat).toBe('24h');
+    expect(out.injection.dateFormat).toBe('auto');
+    expect(out.injection.frequency).toBe('every-message');
+  });
+  it('keep valid choices and reject invalid ones', () => {
+    const good = migrate({
+      schemaVersion: SCHEMA_VERSION,
+      injection: { timeFormat: '12h', dateFormat: 'iso' },
+    });
+    expect(good.injection.timeFormat).toBe('12h');
+    expect(good.injection.dateFormat).toBe('iso');
+    const bad = migrate({
+      schemaVersion: SCHEMA_VERSION,
+      injection: { timeFormat: '99h', dateFormat: 'nonsense' },
+    });
+    expect(bad.injection.timeFormat).toBe('24h');
+    expect(bad.injection.dateFormat).toBe('auto');
+  });
+});

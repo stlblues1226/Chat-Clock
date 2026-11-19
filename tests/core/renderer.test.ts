@@ -108,7 +108,7 @@ describe('renderFullBlock — custom template', () => {
 });
 
 describe('renderCompact', () => {
-  it('renders the pastille form', () => {
+  it('renders the compact form', () => {
     expect(renderCompact(exampleInput())).toBe('⌚ Current time: 14:32 (+12 min)');
   });
   it('omits elapsed at session start', () => {
@@ -118,5 +118,50 @@ describe('renderCompact', () => {
     expect(renderCompact({ ...exampleInput(), elapsedMs: 103 * MIN })).toBe(
       '⌚ Current time: 14:32 (+1 h 43)',
     );
+  });
+});
+
+describe('time and date formats', () => {
+  function withFormats(timeFormat: '24h' | '12h', dateFormat: Settings['injection']['dateFormat']) {
+    const input = exampleInput();
+    input.settings = {
+      ...input.settings,
+      injection: {
+        ...input.settings.injection,
+        timeFormat,
+        dateFormat,
+        customTemplate: '{date} {time}',
+      },
+    };
+    return input;
+  }
+
+  it('defaults keep the original look (MM/DD/YYYY, 24-hour)', () => {
+    expect(renderFullBlock(withFormats('24h', 'auto'))).toBe('07/16/2026 14:32');
+  });
+  it('shows the 12-hour clock with AM/PM', () => {
+    expect(renderFullBlock(withFormats('12h', 'auto'))).toBe('07/16/2026 2:32 PM');
+  });
+  it('uses a plain space before AM/PM', () => {
+    expect(renderFullBlock(withFormats('12h', 'auto'))).not.toMatch(/[  ]/);
+  });
+  it('handles midnight and noon in 12-hour mode', () => {
+    const midnight = withFormats('12h', 'auto');
+    midnight.now = new Date(Date.UTC(2026, 6, 15, 22, 5)); // 00:05 CEST
+    expect(renderFullBlock(midnight)).toBe('07/16/2026 12:05 AM');
+    const noon = withFormats('12h', 'auto');
+    noon.now = new Date(Date.UTC(2026, 6, 16, 10, 0)); // 12:00 CEST
+    expect(renderFullBlock(noon)).toBe('07/16/2026 12:00 PM');
+  });
+  it('renders every date format', () => {
+    expect(renderFullBlock(withFormats('24h', 'numeric'))).toBe('07/16/2026 14:32');
+    expect(renderFullBlock(withFormats('24h', 'short'))).toBe('Jul 16, 2026 14:32');
+    expect(renderFullBlock(withFormats('24h', 'long'))).toBe('July 16, 2026 14:32');
+    expect(renderFullBlock(withFormats('24h', 'dayfirst'))).toBe('16 July 2026 14:32');
+    expect(renderFullBlock(withFormats('24h', 'iso'))).toBe('2026-07-16 14:32');
+  });
+  it('applies the 12-hour clock to the compact form too', () => {
+    const input = withFormats('12h', 'auto');
+    expect(renderCompact(input)).toBe('⌚ Current time: 2:32 PM (+12 min)');
   });
 });

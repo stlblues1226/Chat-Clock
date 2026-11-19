@@ -56,6 +56,74 @@ const MOON_PHASE_NAMES: Record<BlockLanguage, string[]> = {
   ],
 };
 
+/** Date in the chosen format, in the block's time zone. */
+export function formatDate(ctx: ComplicationContext): string {
+  const choice = ctx.dateFormat ?? 'auto';
+  const fr = ctx.lang === 'fr';
+  const tz = ctx.timeZone;
+  switch (choice) {
+    case 'auto':
+      // Original behaviour: English numeric MM/DD/YYYY, French long form.
+      return fr
+        ? fmt(ctx, { day: 'numeric', month: 'long', year: 'numeric' })
+        : new Intl.DateTimeFormat('en-US', {
+            timeZone: tz,
+            month: '2-digit',
+            day: '2-digit',
+            year: 'numeric',
+          }).format(ctx.now);
+    case 'numeric':
+      return new Intl.DateTimeFormat(fr ? 'fr-FR' : 'en-US', {
+        timeZone: tz,
+        month: '2-digit',
+        day: '2-digit',
+        year: 'numeric',
+      }).format(ctx.now);
+    case 'short':
+      return new Intl.DateTimeFormat(fr ? 'fr-FR' : 'en-US', {
+        timeZone: tz,
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+      }).format(ctx.now);
+    case 'long':
+      return new Intl.DateTimeFormat(fr ? 'fr-FR' : 'en-US', {
+        timeZone: tz,
+        month: 'long',
+        day: 'numeric',
+        year: 'numeric',
+      }).format(ctx.now);
+    case 'dayfirst':
+      return new Intl.DateTimeFormat(fr ? 'fr-FR' : 'en-GB', {
+        timeZone: tz,
+        month: 'long',
+        day: 'numeric',
+        year: 'numeric',
+      }).format(ctx.now);
+    case 'iso': {
+      const c = civilInTz(ctx.now, tz);
+      const pad = (n: number): string => String(n).padStart(2, '0');
+      return `${c.year}-${pad(c.month)}-${pad(c.day)}`;
+    }
+  }
+}
+
+/** Time of day: "14:32" (24h) or "2:32 PM" (12h). */
+export function formatTime(ctx: ComplicationContext): string {
+  if (ctx.timeFormat === '12h') {
+    // Some engines put a narrow no-break space before AM/PM; use a plain space.
+    return new Intl.DateTimeFormat('en-US', {
+      timeZone: ctx.timeZone,
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true,
+    })
+      .format(ctx.now)
+      .replace(/[\u202f\u00a0]/g, ' ');
+  }
+  return fmt(ctx, { hour: '2-digit', minute: '2-digit', hourCycle: 'h23' });
+}
+
 function fmt(ctx: ComplicationContext, options: Intl.DateTimeFormatOptions): string {
   return new Intl.DateTimeFormat(INTL_LOCALE[ctx.lang], {
     timeZone: ctx.timeZone,
@@ -67,16 +135,7 @@ export const COMPLICATIONS: Record<ComplicationId, Complication> = {
   date: {
     id: 'date',
     label: { en: 'Date', fr: 'Date' },
-    // Local patch: English uses numeric MM/DD/YYYY; French keeps the long form.
-    value: (ctx) =>
-      ctx.lang === 'en'
-        ? new Intl.DateTimeFormat('en-US', {
-            timeZone: ctx.timeZone,
-            month: '2-digit',
-            day: '2-digit',
-            year: 'numeric',
-          }).format(ctx.now)
-        : fmt(ctx, { day: 'numeric', month: 'long', year: 'numeric' }),
+    value: (ctx) => formatDate(ctx),
   },
   weekday: {
     id: 'weekday',
@@ -86,7 +145,7 @@ export const COMPLICATIONS: Record<ComplicationId, Complication> = {
   clock: {
     id: 'clock',
     label: { en: 'Time', fr: 'Heure' },
-    value: (ctx) => fmt(ctx, { hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }),
+    value: (ctx) => formatTime(ctx),
   },
   timezone: {
     id: 'timezone',

@@ -5,15 +5,13 @@ import { renderCompact, renderFullBlock } from './template-renderer';
 export interface Preview {
   text: string;
   isFull: boolean;
-  /** "HH:MM" in the block's time zone — the pastille chip label. */
-  clock: string;
   elapsedMs: number | null;
   sessionMs: number | null;
 }
 
 /**
  * What WOULD accompany a message sent right now — without mutating any
- * state. Shared by the pastille and the popup so they can never disagree.
+ * state. Used by the popup preview.
  */
 export function buildPreview(settings: Settings, wrist: WristState, nowMs: number): Preview {
   const simulated = tick(wrist, nowMs, settings.injection.sessionResetMinutes);
@@ -28,15 +26,9 @@ export function buildPreview(settings: Settings, wrist: WristState, nowMs: numbe
     elapsedMs: simulated.elapsedMs,
     sessionMs: simulated.sessionMs,
   };
-  const clock = new Intl.DateTimeFormat('en-GB', {
-    hour: '2-digit',
-    minute: '2-digit',
-    hourCycle: 'h23',
-  }).format(input.now);
   return {
     text: isFull ? renderFullBlock(input) : renderCompact(input),
     isFull,
-    clock,
     elapsedMs: simulated.elapsedMs,
     sessionMs: simulated.sessionMs,
   };
