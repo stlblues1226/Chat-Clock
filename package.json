@@ -2,7 +2,7 @@
   "name": "chat-clock",
   "description": "Chat Clock — adds the current date and time to the messages you send to an AI chat. A modified fork of AI-Watch by Alain Caviggia (MIT).",
   "private": true,
-  "version": "1.9.0",
+  "version": "1.9.2",
   "type": "module",
   "scripts": {
     "dev": "wxt",

@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.9.2 — (2026-11-25)
+
+- No code changes. First version submitted for public listing on
+  addons.mozilla.org.
+
+## 1.9.1 — (2026-11-25)
+
+- No code changes. Signed for self-distribution only; version number used up
+  before the listing switch was found.
+
 ## 1.9.0 — (2026-11-19)
 
 - New setting: 12-hour clock with AM/PM or the 24-hour clock.
